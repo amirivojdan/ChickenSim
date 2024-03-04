@@ -31,6 +31,7 @@ to go
   ask turtles [rt random-float 45 - random-float 45 fd 0.5]
   tick
   updatetime
+  ;;export-view (word ticks ".png") ;;to animate later
 end
 
 to updatetime
@@ -46,7 +47,6 @@ to updatetime
 
   set minutes floor (remaining-seconds / seconds-per-minute)
 end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 196
