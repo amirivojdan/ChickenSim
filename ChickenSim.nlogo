@@ -28,10 +28,14 @@ end
 
 to go
   if days > 42 [ stop ]
-  ask turtles [rt random-float 45 - random-float 45 fd 0.5]
+  if (hours <= 22) and (hours >= 6) [move]
   tick
   updatetime
   ;;export-view (word ticks ".png") ;;to animate later
+end
+
+to move
+  ask turtles [rt random-float 45 - random-float 45 fd 0.5]
 end
 
 to updatetime
