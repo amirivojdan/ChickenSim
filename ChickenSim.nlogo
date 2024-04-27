@@ -3,10 +3,14 @@ globals
   days
   hours
   minutes
-
   light
   temperature
 
+  hourConsumption
+  lastConsumption
+
+  feedpersecond
+  mealduration
 ]
 
 turtles-own [
@@ -14,28 +18,79 @@ turtles-own [
   feed    ;; agent's current feed level
   water   ;; agent's current feed level
   isResting? ;; if the chicken is resting (does not move) (it should be a function of age + feed + drink+ light)
+  isFeeding?
+]
+
+patches-own [
+  is-feeder?  ; flag to identify the feeder patch
 ]
 
 to setup
   clear-all
+  set hourConsumption 0
+  set feedpersecond 0.046
+  set mealduration 367 ;seconds
   create-turtles population
     [ set size 4.5
       setxy random-xcor random-ycor
       set shape "chicken"
+      set isFeeding? false
       ]
   reset-ticks
+  setup-feeder
 end
 
+to setup-feeder
+  ask patches with [distance (patch 0 0) <= 2] [
+    set is-feeder? true  ; set the patches within the feeder circle as feeders
+    set pcolor red  ; set the color of the feeder patches (you can change this)
+  ]
+end
+
+to eatfeed
+  ask turtles [
+
+    if ([is-feeder?] of patch-here ) = true  [
+
+      if feed < 16.8 [
+        set feed feed + feedpersecond
+        set hourConsumption hourConsumption + feedpersecond
+        set isFeeding? true
+      ]
+      if feed >= 16.8 [ set isFeeding? false ]
+
+    ]
+  ]
+end
+
+
 to go
-  if days > 42 [ stop ]
-  if (hours <= 22) and (hours >= 6) [move]
-  tick
+  if days > 19 [ stop ]
+  if (hours <= 22) and (hours >= 6) [
+    move
+    eatfeed
+  ]
+  digest
   updatetime
+  tick
   ;;export-view (word ticks ".png") ;;to animate later
+
 end
 
 to move
-  ask turtles [rt random-float 45 - random-float 45 fd 0.5]
+  ask turtles [
+    if isFeeding? = false [
+      rt random-float 45 - random-float 45 fd 0.5
+    ]
+  ]
+end
+
+to digest
+    ask turtles [
+    if (isFeeding? = false) [
+      set feed feed - 0.01
+    ]
+  ]
 end
 
 to updatetime
@@ -50,16 +105,18 @@ to updatetime
   set remaining-seconds remaining-seconds - (hours * seconds-per-hour)
 
   set minutes floor (remaining-seconds / seconds-per-minute)
+
+
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-196
+15
 10
-600
-415
+459
+455
 -1
 -1
-12.0
+13.212121212121213
 1
 10
 1
@@ -73,17 +130,17 @@ GRAPHICS-WINDOW
 16
 -16
 16
-0
-0
+1
+1
 1
 ticks
 30.0
 
 BUTTON
-64
-84
-128
-117
+547
+67
+611
+100
 Setup
 setup
 NIL
@@ -97,10 +154,10 @@ NIL
 1
 
 SLIDER
-13
-34
-185
-67
+496
+19
+746
+52
 population
 population
 0
@@ -112,10 +169,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-78
-134
-141
-167
+621
+67
+684
+100
 Go
 go
 T
@@ -129,10 +186,10 @@ NIL
 1
 
 MONITOR
-773
-106
-831
-151
+1007
+14
+1065
+59
 NIL
 minutes
 0
@@ -140,10 +197,10 @@ minutes
 11
 
 MONITOR
-654
-106
-711
-151
+888
+14
+945
+59
 NIL
 days
 0
@@ -151,15 +208,33 @@ days
 11
 
 MONITOR
-713
-106
-770
-151
+947
+14
+1004
+59
 NIL
 hours
 0
 1
 11
+
+PLOT
+511
+127
+1123
+455
+Feed Consumption over Time
+Time
+Feed Consumption
+0.0
+0.0
+0.0
+0.0
+true
+false
+"" ""
+PENS
+"feedConsumed" 3600.0 0 -15040220 true "" "plot (hourConsumption - lastConsumption) * 100\nset lastConsumption hourConsumption\n"
 
 @#$#@#$#@
 ## WHAT IS IT?
