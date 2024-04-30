@@ -1,5 +1,6 @@
 # ChickenSim
-An agent-based model for feeding behaviour and mobility level analysis in poultry farms
+An agent-based model of feeding behavior in a poultry farm.
+
 
 ![Animated simulation](animated_simulation.gif)
 
