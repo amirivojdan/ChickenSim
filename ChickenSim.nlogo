@@ -19,6 +19,7 @@ turtles-own [
   water   ;; agent's current feed level
   isResting? ;; if the chicken is resting (does not move) (it should be a function of age + feed + drink+ light)
   isFeeding?
+  restTicks
 ]
 
 patches-own [
@@ -35,6 +36,7 @@ to setup
       setxy random-xcor random-ycor
       set shape "chicken"
       set isFeeding? false
+      set restTicks 0
       ]
   reset-ticks
   setup-feeder
@@ -72,15 +74,24 @@ to go
   ]
   digest
   updatetime
+  rest
   tick
   ;;export-view (word ticks ".png") ;;to animate later
 
 end
 
+to rest
+   ask turtles [
+    if (restTicks > 0) [
+      set restTicks restTicks - 1
+    ]
+  ]
+end
+
 to move
   ask turtles [
-    if isFeeding? = false [
-      rt random-float 45 - random-float 45 fd 0.5
+    if isFeeding? = false and restTicks = 0 [
+      rt random-float 45 - random-float 45 fd random-float 0.7
     ]
   ]
 end
@@ -105,6 +116,11 @@ to updatetime
   set remaining-seconds remaining-seconds - (hours * seconds-per-hour)
 
   set minutes floor (remaining-seconds / seconds-per-minute)
+  ask turtles [
+    if ( ticks mod 60 = 0 ) and ( random-float 1.0 < 0.01 ) [
+      set restTicks int ( 1800 * random-float 1.0 )
+    ]
+  ]
 
 
 end
@@ -219,9 +235,9 @@ hours
 11
 
 PLOT
-511
+470
 127
-1123
+1249
 455
 Feed Consumption over Time
 Time
