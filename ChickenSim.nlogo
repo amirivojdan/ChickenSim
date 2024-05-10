@@ -9,6 +9,9 @@ globals
   hourConsumption
   lastConsumption
 
+  dailyConsumption
+  lastDailyConsumption
+
   feedpersecond
   mealduration
 ]
@@ -20,6 +23,7 @@ turtles-own [
   isResting? ;; if the chicken is resting (does not move) (it should be a function of age + feed + drink+ light)
   isFeeding?
   restTicks
+  dailyfeed
 ]
 
 patches-own [
@@ -28,7 +32,11 @@ patches-own [
 
 to setup
   clear-all
+
   set hourConsumption 0
+  set lastConsumption 0
+  set dailyConsumption 0
+  set lastDailyConsumption 0
   set feedpersecond 0.046
   set mealduration 367 ;seconds
   create-turtles population
@@ -54,12 +62,17 @@ to eatfeed
 
     if ([is-feeder?] of patch-here ) = true  [
 
-      if feed < 16.8 [
+      ifelse  ( feed < 2 + random-float 2 and dailyfeed < 200 + random-float ( 10 * age ) ) [
         set feed feed + feedpersecond
         set hourConsumption hourConsumption + feedpersecond
+        set dailyConsumption ( dailyConsumption + feedpersecond )
         set isFeeding? true
+        set dailyfeed dailyfeed + feedpersecond
       ]
-      if feed >= 16.8 [ set isFeeding? false ]
+      [
+        set isFeeding? false
+        fd 0.3 + random-float 0.7
+      ]
 
     ]
   ]
@@ -67,7 +80,7 @@ end
 
 
 to go
-  if days > 19 [ stop ]
+  if days > 6 [ stop ]
   if (hours <= 22) and (hours >= 6) [
     move
     eatfeed
@@ -81,11 +94,18 @@ to go
 end
 
 to rest
-   ask turtles [
+
+  ask turtles [
+    if ( ticks mod 60 = 0 ) and ( random-float 1.0 < 0.05 ) [
+      set restTicks  1000 + int ( random-float 1.0 * 1000)
+    ]
+
     if (restTicks > 0) [
       set restTicks restTicks - 1
     ]
   ]
+
+
 end
 
 to move
@@ -99,7 +119,7 @@ end
 to digest
     ask turtles [
     if (isFeeding? = false) [
-      set feed feed - 0.01
+      set feed feed - 0.003
     ]
   ]
 end
@@ -116,10 +136,18 @@ to updatetime
   set remaining-seconds remaining-seconds - (hours * seconds-per-hour)
 
   set minutes floor (remaining-seconds / seconds-per-minute)
-  ask turtles [
-    if ( ticks mod 60 = 0 ) and ( random-float 1.0 < 0.01 ) [
-      set restTicks int ( 1800 * random-float 1.0 )
-    ]
+
+
+
+  if (ticks mod 86400 = 0 ) [
+    ask turtles [
+      set dailyfeed 0
+      set age age + 1
+    ] ;; reset max feed consumption per day per chicken
+    file-open "daily_data.txt"
+    file-print (dailyConsumption - lastDailyConsumption)
+    set lastDailyConsumption dailyConsumption
+    file-close
   ]
 
 
@@ -245,7 +273,7 @@ Feed Consumption
 0.0
 0.0
 0.0
-0.0
+30.0
 true
 false
 "" ""
